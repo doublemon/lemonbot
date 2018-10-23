@@ -6,7 +6,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 HEADERS = {
-        'user-agent': 'LemonBot/0.1 (+)',
+        'user-agent': 'LemonBot/0.1 (+https://github.com/doublemon/lemonbot/blob/master/README.md)',
     }
 
 def roles_from_html(html):
