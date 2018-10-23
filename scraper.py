@@ -31,7 +31,7 @@ async def main():
         all_data = json.load(infile)
     async with aiohttp.ClientSession() as session:
         for i in range(1,1000): #897236 is the first report from Sept 2017 (First month after new Ranked Rolelist.)
-            async with await session.post(f'https://www.blankmediagames.com/Trial/viewReport.php?id={i}', headers=HEADERS) as response:
+            async with await session.get(f'https://www.blankmediagames.com/Trial/viewReport.php?id={i}', headers=HEADERS) as response:
                 try:
                     r = roles_from_html(await response.text())
                 except Exception:
