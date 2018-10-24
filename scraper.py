@@ -1,51 +1,74 @@
 import asyncio
 import json
 import re
+from enum import Enum
+from time import time
 
 import aiohttp
 from bs4 import BeautifulSoup
 
 HEADERS = {
-        'user-agent': 'LemonBot/0.1 (+https://github.com/doublemon/lemonbot/blob/master/README.md)',
-    }
+    'user-agent': 'LemonBot/0.1 (+https://github.com/doublemon/lemonbot/blob/master/README.md)',
+}
 
-def roles_from_html(html):
-    soup = BeautifulSoup(html, 'lxml')
 
-    spans = soup.find_all('span', {'class': 'notice'})
-    if 'Ranked' not in str(spans[0].contents):
-        return []
-    scripts = soup.find_all('script')
-    populator = str(scripts[-1].contents[0])
-    data = populator.split('\n')[3].strip()
-    json_data = re.search('{(.*?)};', data).group().replace(';', '')
-    parsed = json.loads(json_data)
-    players = parsed['players']
-    roles = [p['role'] for p in players]
-    return roles
+class GameMode(Enum):
+    CLASSIC = 0
+    RANKED = 1
+    ALLANY = 2
+    CUSTOM = 3
+    RAINBOW = 4
+
+
+class RoleParser:
+    def __init__(self, html):
+        self.soup = BeautifulSoup(html, 'lxml')
+        notices = self.soup.find_all('span', {'class': 'notice'})
+        self.is_ranked = False
+        self.unique_roles = True
+        for notice in notices:
+            if 'Ranked' in notice.text:
+                self.is_ranked = True
+
+    def parse_roles(self):
+        scripts = self.soup.find_all('script')
+        populator = ''.join([script.text for script in scripts if not script.get('src', False)])
+        report_data = re.search('data = .*?;', populator).group()
+        data_strip = re.sub('data = ', '', report_data)
+        data_strip = re.sub(';', '', data_strip)
+        data = json.loads(data_strip)
+        players = data.get('players')
+        roles = [p.get('role') for p in players]
+        return roles
 
 
 async def main():
-    all_data = {}
-    with open('data.json', 'rb') as infile:
-        all_data = json.load(infile)
+    file_name = f'scrape/role_scrape_{int(time())}.json'
+    with open(file_name, 'w+'):
+        pass
+    role_scrape = []
     async with aiohttp.ClientSession() as session:
-        for i in range(1,1000): #897236 is the first report from Sept 2017 (First month after new Ranked Rolelist.)
-            async with await session.get(f'https://www.blankmediagames.com/Trial/viewReport.php?id={i}', headers=HEADERS) as response:
-                try:
-                    r = roles_from_html(await response.text())
-                except Exception:
-                    r = None
-                print(f'Fetching report ID {i}')
-                if r:
-                    print('Ranked Game. Roles as follows:')
-                    print(f'\t{r}')
-                    all_data[f'Report {i}']=r
-                    with open('data.json', 'w') as outfile:
-                        json.dump(all_data, outfile)
-                else:
-                    print('Not a ranked Game.')
+        for i in range(1001500,
+                       1002000):  # 897236 is the first report from Sept 2017 (First month after new Ranked Rolelist.)
+            async with await session.get(f'https://www.blankmediagames.com/Trial/viewReport.php?id={i}',
+                                         headers=HEADERS) as response:
+                print(f'Fetching report: ID {i}.')
+                if response.status == 200:
+                    html = await response.text(encoding='utf-8')
+                    parser = RoleParser(html)
+                    if parser.is_ranked:
+                        roles = parser.parse_roles()
+                        if roles.count('Mafioso') <= 1:
+                            print(f'\t{roles}')
+                            role_scrape.append(roles)
 
+                        else:
+                            print('\tMultiple Mafioso.')
+                    else:
+                        print('\tNot a Ranked Game.')
+
+    with open(file_name, 'w') as outfile:
+        json.dump(role_scrape, outfile)
 
 
 loop = asyncio.get_event_loop()
