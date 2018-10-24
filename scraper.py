@@ -8,7 +8,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 HEADERS = {
-    'user-agent': 'LemonBot/0.1 (+https://github.com/doublemon/lemonbot/blob/master/README.md)',
+    'user-agent': 'Mozilla/5.0 (compatible; LemonBot/0.1; +https://github.com/doublemon/lemonbot/blob/master/README.md)',
 }
 
 
@@ -48,8 +48,8 @@ async def main():
         pass
     role_scrape = []
     async with aiohttp.ClientSession() as session:
-        for i in range(1001500,
-                       1002000):  # 897236 is the first report from Sept 2017 (First month after new Ranked Rolelist.)
+        for i in range(1002100,
+                       1003000):  # 897236 is the first report from Sept 2017 (First month after new Ranked Rolelist.)
             async with await session.get(f'https://www.blankmediagames.com/Trial/viewReport.php?id={i}',
                                          headers=HEADERS) as response:
                 print(f'Fetching report: ID {i}.')
