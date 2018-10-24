@@ -48,8 +48,8 @@ async def main():
         pass
     role_scrape = []
     async with aiohttp.ClientSession() as session:
-        for i in range(1002100,
-                       1003000):  # 897236 is the first report from Sept 2017 (First month after new Ranked Rolelist.)
+        for i in range(1003000,
+                       1007000):  # 897236 is the first report from Sept 2017 (First month after new Ranked Role List.)
             async with await session.get(f'https://www.blankmediagames.com/Trial/viewReport.php?id={i}',
                                          headers=HEADERS) as response:
                 print(f'Fetching report: ID {i}.')
@@ -58,12 +58,12 @@ async def main():
                     parser = RoleParser(html)
                     if parser.is_ranked:
                         roles = parser.parse_roles()
-                        if roles.count('Mafioso') <= 1:
+                        if roles.count('Mafioso') <= 1 and roles.count('Godfather') <= 1:
                             print(f'\t{roles}')
                             role_scrape.append(roles)
 
                         else:
-                            print('\tMultiple Mafioso.')
+                            print('\tMultiple Mafioso/Godfather.')
                     else:
                         print('\tNot a Ranked Game.')
 
